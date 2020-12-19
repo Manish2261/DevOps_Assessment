@@ -1,9 +1,19 @@
+  
 pipeline{
     agent none
     options{
-        skipsStageAfterUnstable()
+        skipStagesAfterUnstable()
     }
     stages{
+        stage('Pre-Build Email Test') {
+            steps{
+            mail bcc: '', body: '''Hello Manish,
+                This is to inform you that a build is initiated for your project of kpit_pipeline.
+                Thanks and Regards,
+                Manish G Agrawal''', cc: '', from: '', replyTo: '', subject: 'Alert of Pre-Build of DevOps Pipeline', to: 'mag70452261@gmail.com'
+                 }
+            }    
+           
         stage('Build'){
             agent{
                 docker {
@@ -11,7 +21,7 @@ pipeline{
                 }
             }
             steps{
-                sh 'python3 -m py_compile sources/Address_book.py'
+                sh 'python3 -m py_compile sources/Address_book.py sources/Test_Func.py'
                 stash(name: 'compiled-results', includes: 'sources/*.py*')
             }
         }
@@ -40,7 +50,7 @@ pipeline{
             steps{
                 dir(path: env.BUILD_ID){
                     unstash(name: 'compiled-results')
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F Address_book.py'"
+                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F Address_book.py '"
                 }
             }
             post {
@@ -50,7 +60,20 @@ pipeline{
                 }
             }
         }
-    }
-
-
-}
+	    stage('Post-Build Email Test') {
+            steps{
+            mail bcc: '', body: '''Hello Manish,
+                This is to inform you that a build is completed for your project of kpit_pipeline.
+                Thanks and Regards,
+                Manish G Agrawal''', cc: '', from: '', replyTo: '', subject: 'Alert of Post-Build of DevOps Pipeline', to: 'mag70452261@gmail.com'
+            }
+            post {
+             always { 
+                mail to: 'mag70452261@gmail.com',
+                subject: "Status of pipeline: ${currentBuild.fullDisplayName}",
+                body: "${env.BUILD_URL} has result ${currentBuild.result}"
+                }
+            }
+        }
+	}	
+}		
