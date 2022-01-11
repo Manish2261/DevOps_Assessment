@@ -1,0 +1,27 @@
+pipeline{
+    agent none
+    options{
+        skipStagesAfterUnstable()
+    }
+    stages{
+      stage('Build'){
+            agent{
+                docker {
+                    image 'python:3-alpine'
+                }
+            }
+            steps{
+                sh 'docker build -t addr_book:1.0 .'
+            }
+        }
+     stage('Deploy'){
+            agent{
+                docker {
+                    image 'python:3-alpine'
+                }
+            }
+            steps{
+                sh 'docker push addr_book:1.0 && \
+                    echo Docker build Finished.'
+            }
+        }
